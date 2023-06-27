@@ -45,7 +45,7 @@ func main() {
 	voiceId := "21m00Tcm4TlvDq8ikWAM"
 	audio, err := tts.
 		NewTextToSpeech(os.Getenv("XI_API_KEY"), "eleven_monolingual_v1").
-		Generate(translated, voiceId, 0)
+		Generate(converted, voiceId, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
