@@ -2,13 +2,11 @@ package facade
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
 func TestTranslate(t *testing.T) {
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", filepath.Join(os.Getenv("HOME"), "translate-credentials.json"))
+	//os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", filepath.Join(os.Getenv("HOME"), "translate-credentials.json"))
 	translator, err := NewTranslateProcessorFactory().SourceLanguage("en").TargetLanguage("es").New()
 	if err != nil {
 		t.Fatal(err)

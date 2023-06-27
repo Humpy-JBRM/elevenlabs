@@ -18,9 +18,8 @@ func main() {
 		log.Fatal("Usage: main sentence...")
 	}
 
-	// convert all arabic numbers to words
+	// create the sentence from the command-line
 	sentence := strings.Join(os.Args[1:], " ")
-	original, converted := num2words.NewTextProcessor().Process(sentence)
 
 	// translate the converted sentence
 	// let's do spanish, just for fun
@@ -31,12 +30,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	translated, err := translator.Execute(converted)
+	translated, err := translator.Execute(sentence)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// convert all arabic numbers to words
+	original, converted := num2words.NewTextProcessor("es").Process(translated)
+
 	fmt.Printf("IN : %s\n", original)
-	fmt.Printf("OUT: %s\n", translated)
+	fmt.Printf("OUT: %s\n", converted)
 
 	// Convert this to a voice via eleven labs
 	voiceId := "21m00Tcm4TlvDq8ikWAM"

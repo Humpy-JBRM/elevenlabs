@@ -1,9 +1,12 @@
 package num2words
 
 import (
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
+
+	translate "github.com/Humpy-JBRM/elevenlabs/facade/translate"
 )
 
 type TextProcessor interface {
@@ -19,21 +22,24 @@ type processor struct {
 
 type textProcessor struct {
 	processorsByName map[string]*processor
+	targetLanguage   string
 }
 
-func NewTextProcessor() TextProcessor {
-	return &textProcessor{
+func NewTextProcessor(targetLanguage string) TextProcessor {
+	p := &textProcessor{
+		targetLanguage: targetLanguage,
 		// TODO: deal with decimal numbers
 		// TODO: dates (UK format + US format)   01/03/2023 == 1 March (UK) and Jan 3 (US)
 		// TODO: years, e.g. "2023" is "twenty twenty three" and not "two thousand twenty three"
 		//       this needs to be figured out from the context, so you'll need a clever bit of
 		//       sentence analysis
-		processorsByName: map[string]*processor{
-			"spell_numbers":     &processor{reMatch: regexp.MustCompile("([0-9]+)(.*)"), processFunc: preprocessNumber},
-			"exclamation_marks": &processor{reMatch: regexp.MustCompile("(.*)\\!$"), processFunc: preprocessExcalamation},
-			"domain_names":      &processor{reMatch: regexp.MustCompile("(.*\\..*)\\."), processFunc: preprocessDomain},
-		},
 	}
+	p.processorsByName = map[string]*processor{
+		"spell_numbers":     &processor{reMatch: regexp.MustCompile("([0-9]+)(.*)"), processFunc: p.preprocessNumber},
+		"exclamation_marks": &processor{reMatch: regexp.MustCompile("(.*)\\!$"), processFunc: p.preprocessExcalamation},
+		"domain_names":      &processor{reMatch: regexp.MustCompile("(.*\\..*)\\."), processFunc: p.preprocessDomain},
+	}
+	return p
 }
 
 func (c *textProcessor) Process(original string) (string, string) {
@@ -64,20 +70,33 @@ func (c *textProcessor) Process(original string) (string, string) {
 	return original, strings.Join(result, " ")
 }
 
-func preprocessNumber(text []string) []string {
+func (c *textProcessor) preprocessNumber(text []string) []string {
 	intValue, err := strconv.Atoi(text[0])
 	if err != nil {
 		// Somehow this is not a parseable number.
 		// Most likely because it is a floating point number, e.g. 3.1415926
 		return text
 	}
-	return strings.Split(Convert(intValue), " ")
+	asWords := Convert(intValue)
+	if c.targetLanguage != "" {
+		translator, err := translate.NewTranslateProcessorFactory().SourceLanguage("en").TargetLanguage(c.targetLanguage).New()
+		if err != nil {
+			log.Println(err.Error())
+			return text
+		}
+		asWords, err = translator.Execute(asWords)
+		if err != nil {
+			log.Println(err.Error())
+			return text
+		}
+	}
+	return strings.Split(asWords, " ")
 }
 
-func preprocessDomain(text []string) []string {
+func (c *textProcessor) preprocessDomain(text []string) []string {
 	return []string{text[1] + " ."}
 }
 
-func preprocessExcalamation(text []string) []string {
+func (c *textProcessor) preprocessExcalamation(text []string) []string {
 	return []string{text[1] + " !"}
 }
