@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"io"
 	"log"
-	translate "elevenlabs/facade/translate"
-	tts "elevenlabs/facade/tts"
-	"elevenlabs/num2words"
 	"os"
 	"path/filepath"
 	"strings"
+
+	translate "github.com/Humpy-JBRM/elevenlabs/facade/translate"
+	tts "github.com/Humpy-JBRM/elevenlabs/facade/tts"
+	"github.com/Humpy-JBRM/elevenlabs/num2words"
 )
 
 func main() {

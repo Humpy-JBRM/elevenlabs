@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"elevenlabs/util"
+
+	"github.com/Humpy-JBRM/elevenlabs/util"
 )
 
 type TextToSpeech interface {
