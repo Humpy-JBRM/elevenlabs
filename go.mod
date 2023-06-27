@@ -1,4 +1,4 @@
-module elevenlabs
+module github.com/Humpy-JBRM/elevenlabs
 
 go 1.20
 
