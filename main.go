@@ -20,7 +20,7 @@ func main() {
 
 	// convert all arabic numbers to words
 	sentence := strings.Join(os.Args[1:], " ")
-	original, converted := num2words.NewNumberConverter().Convert(sentence)
+	original, converted := num2words.NewTextProcessor().Process(sentence)
 
 	// translate the converted sentence
 	// let's do spanish, just for fun

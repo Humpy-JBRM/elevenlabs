@@ -17,6 +17,29 @@ becomes
 
 then run that through whatever translation you're using before sending it to elevenlabs.
 
+## Domain Names and Words Containing Dots
+Domain names and words containing dots are also a problem at elevenlabs:
+
+	- I work at microsoft.com.
+
+produces
+
+	- I work at microsoft.com DOT
+
+the fix here is to prepend a space before the final dot, which this client does.
+
+## Words Ending With an Exclamation Mark
+Words ending with an exclamation mark have similar problems:
+
+	- I work at microsoft.com!
+
+produces
+
+	- I work at microsoft.com EXCLAMATION MARK
+
+the fix here is to prepend a space before the exclamation mark, which this client does.
+
+## What This Client Does
 This golang client makes it nice and easy:
 
 	- converts numbers to their word form
@@ -36,10 +59,13 @@ I wrote this to solve a problem that I had and thought it might be useful to oth
 
 	2: GOOGLE_APPLICATION_CREDENTIALS environment variable == path of credentials.json for an account with translate API enabled
 
-	$ go run main.go I saw 5,100 mice
+	$ go run main.go I saw 5,100 mice\!
 	IN : I saw 5,100 mice
-	OUT: I saw five thousand one hundred mice
+	OUT: I saw five thousand one hundred mice !
 	Audio written to out.mp3
+
+## Text Processors
+The text processors are applied based on regexp matching.  See `convert.go`
 
 ## Example code
 ```go

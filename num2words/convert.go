@@ -6,26 +6,37 @@ import (
 	"strings"
 )
 
-type NumberConverter interface {
-	Convert(text string) (string, string)
+type TextProcessor interface {
+	Process(text string) (string, string)
 }
 
-type numberConverter struct {
-	reInteger *regexp.Regexp
+type textProcessFunc func([]string) []string
+
+type processor struct {
+	reMatch     *regexp.Regexp
+	processFunc textProcessFunc
 }
 
-func NewNumberConverter() NumberConverter {
-	return &numberConverter{
+type textProcessor struct {
+	processorsByName map[string]*processor
+}
+
+func NewTextProcessor() TextProcessor {
+	return &textProcessor{
 		// TODO: deal with decimal numbers
 		// TODO: dates (UK format + US format)   01/03/2023 == 1 March (UK) and Jan 3 (US)
 		// TODO: years, e.g. "2023" is "twenty twenty three" and not "two thousand twenty three"
 		//       this needs to be figured out from the context, so you'll need a clever bit of
 		//       sentence analysis
-		reInteger: regexp.MustCompile("([0-9]+)(.*)"),
+		processorsByName: map[string]*processor{
+			"spell_numbers":     &processor{reMatch: regexp.MustCompile("([0-9]+)(.*)"), processFunc: preprocessNumber},
+			"exclamation_marks": &processor{reMatch: regexp.MustCompile("(.*)\\!$"), processFunc: preprocessExcalamation},
+			"domain_names":      &processor{reMatch: regexp.MustCompile("(.*\\..*)\\."), processFunc: preprocessDomain},
+		},
 	}
 }
 
-func (c *numberConverter) Convert(original string) (string, string) {
+func (c *textProcessor) Process(original string) (string, string) {
 	// Step 1: Split the text into words.
 	// This assumes that:
 	//
@@ -36,23 +47,37 @@ func (c *numberConverter) Convert(original string) (string, string) {
 		// Trim all space and strip commas: " 1,234 " => "1234"
 		trimmed := strings.TrimSpace(word)
 		commasStripped := strings.ReplaceAll(trimmed, ",", "")
-		matches := c.reInteger.FindAllStringSubmatch(commasStripped, -1)
-		if len(matches) > 0 {
-			intValue, err := strconv.Atoi(commasStripped)
-			if err != nil {
-				// Somehow this is not a parseable number.
-				// Most likely because it is a floating point number, e.g. 3.1415926
-				result = append(result, trimmed)
-				continue
+		matched := false
+		for _, preProcessor := range c.processorsByName {
+			matches := preProcessor.reMatch.FindAllStringSubmatch(commasStripped, -1)
+			if len(matches) > 0 {
+				matched = true
+				processed := preProcessor.processFunc(matches[0])
+				result = append(result, processed...)
+				break
 			}
-
-			for _, w := range strings.Split(Convert(intValue), " ") {
-				result = append(result, w)
-			}
-			continue
 		}
-
-		result = append(result, trimmed)
+		if !matched {
+			result = append(result, trimmed)
+		}
 	}
 	return original, strings.Join(result, " ")
+}
+
+func preprocessNumber(text []string) []string {
+	intValue, err := strconv.Atoi(text[0])
+	if err != nil {
+		// Somehow this is not a parseable number.
+		// Most likely because it is a floating point number, e.g. 3.1415926
+		return text
+	}
+	return strings.Split(Convert(intValue), " ")
+}
+
+func preprocessDomain(text []string) []string {
+	return []string{text[1] + " ."}
+}
+
+func preprocessExcalamation(text []string) []string {
+	return []string{text[1] + " !"}
 }
